@@ -1,26 +1,20 @@
 package com.cumpatomas.rickandmorty.domain
 
-import android.content.SharedPreferences
-import androidx.activity.ComponentActivity
 import com.cumpatomas.rickandmorty.data.network.CharService
 import com.cumpatomas.rickandmorty.data.network.ResponseEvent
 import com.cumpatomas.rickandmorty.domain.model.CharModel
-import com.cumpatomas.rickandmorty.manualdi.ApplicationModule.applicationContext
 
 class GetCharacters {
     private val provider = CharService()
 
-
-
     suspend operator fun invoke(
-        query: String = ""
+        query: String
     ): List<CharModel> {
         val charList = mutableListOf<CharModel>()
         when (val result = provider.getAllChars(query)) {
             is ResponseEvent.Error -> {
                 println("Error getting characters")
                 result.exception
-//                sharedpref.edit().putString("boolean", "true").apply()
             }
 
             is ResponseEvent.Success -> {

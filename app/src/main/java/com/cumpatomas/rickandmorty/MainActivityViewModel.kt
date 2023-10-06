@@ -1,12 +1,11 @@
 package com.cumpatomas.rickandmorty
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cumpatomas.rickandmorty.domain.GetCharacters
 import com.cumpatomas.rickandmorty.domain.model.CharModel
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -17,42 +16,49 @@ class MainActivityViewModel : ViewModel() {
     val charList = _charList.asStateFlow()
     private val _loading = MutableStateFlow(false)
     val loading = _loading.asStateFlow()
-    val searchText = mutableStateOf("")
+    private val _searchText = MutableStateFlow("")
+    var searchText = _searchText.asStateFlow()
     private val _errorOccurred = MutableStateFlow(false)
     val errorOccurred = _errorOccurred.asStateFlow()
+
+    var searchJob: Job? = null
 
     init {
         viewModelScope.launch(IO) {
             _loading.value = true
-            launch {
+            searchJob = launch {
                 _charList.value = getCharList.invoke("")
-            }.join()
+            }
+            searchJob?.join()
             _loading.value = false
             if (_charList.value.isEmpty()) {
                 _errorOccurred.value = true
-                println("ERROR!")
             }
         }
     }
 
-    fun searchInList(query: String) {
+    private fun searchInList(query: String) {
+        searchJob?.cancel()
         _errorOccurred.value = false
         viewModelScope.launch(IO) {
             _loading.value = true
             launch {
-                if (query.isNotEmpty()) {
-                    delay(1000)
-                    _charList.value = getCharList.invoke()
-                        .filter { it.name.lowercase().contains(query.lowercase()) }
+                if (query.isEmpty()) {
+                    _charList.value = getCharList.invoke("")
                 } else {
-                    _charList.value = getCharList.invoke()
+                    if(query.length > 1)
+                    _charList.value = getCharList.invoke(query)
                 }
             }.join()
             _loading.value = false
             if (_charList.value.isEmpty()) {
                 _errorOccurred.value = true
-                println("ERROR!")
             }
         }
+    }
+
+    fun onSearchTextChange(query: String) {
+        _searchText.value = query
+        searchInList(query)
     }
 }

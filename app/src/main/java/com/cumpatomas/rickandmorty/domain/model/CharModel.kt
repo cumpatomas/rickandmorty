@@ -1,6 +1,7 @@
 package com.cumpatomas.rickandmorty.domain.model
 
-import com.google.gson.annotations.SerializedName
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 
 data class CharModel (
     val id: String,
@@ -8,5 +9,6 @@ data class CharModel (
     val species: String,
     val gender: String,
     val url: String,
-    val image: String
+    val image: String,
+    var webViewState: MutableState<Boolean> = mutableStateOf(false)
 )
