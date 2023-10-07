@@ -6,13 +6,14 @@ import com.cumpatomas.rickandmorty.domain.GetCharacters
 import com.cumpatomas.rickandmorty.domain.model.CharModel
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class MainActivityViewModel : ViewModel() {
     private val getCharList = GetCharacters()
-    private val _charList = MutableStateFlow(emptyList<CharModel>())
+    private val _charList = MutableStateFlow(emptySet<CharModel>())
     val charList = _charList.asStateFlow()
     private val _loading = MutableStateFlow(false)
     val loading = _loading.asStateFlow()
@@ -20,8 +21,7 @@ class MainActivityViewModel : ViewModel() {
     var searchText = _searchText.asStateFlow()
     private val _errorOccurred = MutableStateFlow(false)
     val errorOccurred = _errorOccurred.asStateFlow()
-
-    var searchJob: Job? = null
+    private var searchJob: Job? = null
 
     init {
         viewModelScope.launch(IO) {
@@ -46,8 +46,11 @@ class MainActivityViewModel : ViewModel() {
                 if (query.isEmpty()) {
                     _charList.value = getCharList.invoke("")
                 } else {
-                    if(query.length > 1)
+                    delay(500)
+                    if (query.length > 2)
+                        _charList.value = emptySet()
                     _charList.value = getCharList.invoke(query)
+                    println(_charList.value)
                 }
             }.join()
             _loading.value = false

@@ -9,8 +9,8 @@ class GetCharacters {
 
     suspend operator fun invoke(
         query: String
-    ): List<CharModel> {
-        val charList = mutableListOf<CharModel>()
+    ): Set<CharModel> {
+        val charList = mutableSetOf<CharModel>()
         when (val result = provider.getAllChars(query)) {
             is ResponseEvent.Error -> {
                 println("Error getting characters")
@@ -35,23 +35,8 @@ class GetCharacters {
                             )
                         }
                 }
-
-                if (charsList != null) {
-                    for (i in 0 until charsList.count()) {
-                        charList.add(
-                            CharModel(
-                                charsList[i].id ?: "N/A",
-                                charsList[i].name ?: "N/A",
-                                charsList[i].species ?: "N/A",
-                                charsList[i].gender ?: "N/A",
-                                charsList[i].url ?: "N/A",
-                                charsList[i].image ?: "N/A"
-                            )
-                        )
-                    }
-                }
             }
         }
-        return charList.distinct()
+        return charList
     }
 }

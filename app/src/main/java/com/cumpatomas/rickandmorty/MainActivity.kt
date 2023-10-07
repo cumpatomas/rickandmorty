@@ -96,7 +96,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen(
     viewModel: MainActivityViewModel,
-    charList: State<List<CharModel>>,
+    charList: State<Set<CharModel>>,
     loading: State<Boolean>,
     errorState: State<Boolean>,
     webViewState: MutableState<Boolean>,
@@ -162,9 +162,10 @@ fun MainScreen(
                             .fillMaxSize()
                             .padding(8.dp)
                     ) {
-                        items(charList.value, key = null) { char ->
+                        items(charList.value.distinct(), key = null) { char ->
                             Column(Modifier.animateItemPlacement()) {
                                 Row(Modifier.animateItemPlacement()) {
+
                                     CharCard(char, listState, charList.value.indexOf(char))
                                 }
                                 if (char.webViewState.value) {
