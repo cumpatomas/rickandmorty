@@ -45,11 +45,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
@@ -66,6 +69,7 @@ import com.cumpatomas.rickandmorty.ui.theme.RickAndMortyTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalComposeUiApi::class)
     @SuppressLint("StateFlowValueCalledInComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,13 +79,14 @@ class MainActivity : ComponentActivity() {
             val charList = viewModel.charList.collectAsState()
             val loading = viewModel.loading.collectAsState()
             val noResultsMessage = viewModel.noResultsMessage.collectAsState()
+            val keyboardController = LocalSoftwareKeyboardController.current
 
             RickAndMortyTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen(viewModel, charList, loading, noResultsMessage)
+                    MainScreen(viewModel, charList, loading, noResultsMessage, keyboardController)
                 }
             }
         }
@@ -89,13 +94,16 @@ class MainActivity : ComponentActivity() {
 }
 
 @SuppressLint("StateFlowValueCalledInComposition", "FlowOperatorInvokedInComposition")
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
+    ExperimentalComposeUiApi::class
+)
 @Composable
 fun MainScreen(
     viewModel: MainActivityViewModel,
     charList: State<Set<CharModel>>,
     loading: State<Boolean>,
     noResultsMessage: State<Boolean>,
+    keyboardController: SoftwareKeyboardController?,
 ) {
     val searchText by viewModel.searchText.collectAsState()
 
@@ -161,7 +169,7 @@ fun MainScreen(
                         items(charList.value.distinct(), key = null) { char ->
                             Column(Modifier.animateItemPlacement()) {
                                 Row(Modifier.animateItemPlacement()) {
-                                    CharCard(char, listState, charList.value.indexOf(char))
+                                    CharCard(char, listState, charList.value.indexOf(char), keyboardController)
                                 }
                                 if (char.webViewState.value) {
                                     Row(
@@ -182,11 +190,13 @@ fun MainScreen(
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun CharCard(
     char: CharModel,
     listState: LazyListState,
-    index: Int
+    index: Int,
+    keyboardController: SoftwareKeyboardController?
 ) {
     val mutableText = rememberSaveable { mutableStateOf("+Info") }
     val coroutineScope = rememberCoroutineScope()
@@ -244,6 +254,7 @@ fun CharCard(
                             coroutineScope.launch {
                                 listState.animateScrollToItem(index = index, scrollOffset = 0)
                             }
+                            keyboardController?.hide()
                         })
             }
         }
