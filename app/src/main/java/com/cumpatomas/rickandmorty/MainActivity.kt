@@ -37,7 +37,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -75,34 +74,31 @@ class MainActivity : ComponentActivity() {
             val viewModel = viewModel<MainActivityViewModel>()
             val charList = viewModel.charList.collectAsState()
             val loading = viewModel.loading.collectAsState()
-            val errorState = viewModel.errorOccurred.collectAsState()
-            val webViewState = rememberSaveable { mutableStateOf(false) }
-
+            val noResultsMessage = viewModel.noResultsMessage.collectAsState()
 
             RickAndMortyTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen(viewModel, charList, loading, errorState, webViewState)
+                    MainScreen(viewModel, charList, loading, noResultsMessage)
                 }
             }
         }
     }
 }
 
-@SuppressLint("StateFlowValueCalledInComposition")
+@SuppressLint("StateFlowValueCalledInComposition", "FlowOperatorInvokedInComposition")
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     viewModel: MainActivityViewModel,
     charList: State<Set<CharModel>>,
     loading: State<Boolean>,
-    errorState: State<Boolean>,
-    webViewState: MutableState<Boolean>,
+    noResultsMessage: State<Boolean>,
 ) {
     val searchText by viewModel.searchText.collectAsState()
-    val state = rememberSaveable { mutableStateOf(false) }
+
     Image(
         painter = painterResource(id = R.drawable.rickandmortybackground),
         null,
@@ -140,7 +136,7 @@ fun MainScreen(
             if (loading.value) {
                 CircularProgressIndicator()
             } else {
-                if (errorState.value) {
+                if (noResultsMessage.value) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth(0.8f)
@@ -165,7 +161,6 @@ fun MainScreen(
                         items(charList.value.distinct(), key = null) { char ->
                             Column(Modifier.animateItemPlacement()) {
                                 Row(Modifier.animateItemPlacement()) {
-
                                     CharCard(char, listState, charList.value.indexOf(char))
                                 }
                                 if (char.webViewState.value) {
