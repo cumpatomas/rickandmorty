@@ -7,6 +7,7 @@ import com.cumpatomas.rickandmorty.domain.model.CharModel
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,7 +39,7 @@ class MainActivityViewModel : ViewModel() {
         }
     }
 
-    private suspend fun searchInList(query: String) {
+    suspend fun searchInList(query: String) {
         _charList.value = emptySet()
 
         _noResultsMessage.value = false
@@ -68,4 +69,6 @@ class MainActivityViewModel : ViewModel() {
             }
         }
     }
+
+
 }

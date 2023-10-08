@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -64,37 +65,58 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.cumpatomas.rickandmorty.data.network.ConnectivityObserver
+import com.cumpatomas.rickandmorty.data.network.NetworkConnectivityObserver
 import com.cumpatomas.rickandmorty.domain.model.CharModel
+import com.cumpatomas.rickandmorty.manualdi.ApplicationModule
 import com.cumpatomas.rickandmorty.ui.theme.RickAndMortyTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private lateinit var connectivityObserver: ConnectivityObserver
+
     @OptIn(ExperimentalComposeUiApi::class)
     @SuppressLint("StateFlowValueCalledInComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
+            ApplicationModule.initialiseApplicationContext(this.application)
             val viewModel = viewModel<MainActivityViewModel>()
             val charList = viewModel.charList.collectAsState()
             val loading = viewModel.loading.collectAsState()
             val noResultsMessage = viewModel.noResultsMessage.collectAsState()
             val keyboardController = LocalSoftwareKeyboardController.current
+            connectivityObserver = NetworkConnectivityObserver()
+            val internetStatus by connectivityObserver.observe().collectAsState(
+                initial = ConnectivityObserver.Status.Unavailable
+            )
 
             RickAndMortyTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen(viewModel, charList, loading, noResultsMessage, keyboardController)
+                    MainScreen(
+                        viewModel,
+                        charList,
+                        loading,
+                        noResultsMessage,
+                        keyboardController,
+                        internetStatus
+                    )
                 }
             }
         }
     }
 }
 
-@SuppressLint("StateFlowValueCalledInComposition", "FlowOperatorInvokedInComposition")
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
+@SuppressLint(
+    "StateFlowValueCalledInComposition", "FlowOperatorInvokedInComposition",
+    "CoroutineCreationDuringComposition"
+)
+@OptIn(
+    ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class,
     ExperimentalComposeUiApi::class
 )
 @Composable
@@ -104,8 +126,10 @@ fun MainScreen(
     loading: State<Boolean>,
     noResultsMessage: State<Boolean>,
     keyboardController: SoftwareKeyboardController?,
+    internetStatus: ConnectivityObserver.Status,
 ) {
     val searchText by viewModel.searchText.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
 
     Image(
         painter = painterResource(id = R.drawable.rickandmortybackground),
@@ -144,41 +168,73 @@ fun MainScreen(
             if (loading.value) {
                 CircularProgressIndicator()
             } else {
-                if (noResultsMessage.value) {
+                if (internetStatus == ConnectivityObserver.Status.Unavailable
+                    || internetStatus == ConnectivityObserver.Status.Lost
+                ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth(0.8f)
                     ) {
                         Image(
-                            painterResource(id = R.drawable.error_crying),
+                            painterResource(id = R.drawable.connection_error),
                             null,
-                            modifier = Modifier.clip(
-                                RoundedCornerShape(12.dp)
-                            )
+                            modifier = Modifier
+                                .size(300.dp)
+                                .clip(
+                                    RoundedCornerShape(12.dp)
+                                )
                         )
                     }
                 } else {
-                    val listState = rememberLazyListState()
-                    LazyColumn(
-                        state = listState,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(8.dp)
-                    ) {
-                        items(charList.value.distinct(), key = null) { char ->
-                            Column(Modifier.animateItemPlacement()) {
-                                Row(Modifier.animateItemPlacement()) {
-                                    CharCard(char, listState, charList.value.indexOf(char), keyboardController)
-                                }
-                                if (char.webViewState.value) {
-                                    Row(
-                                        Modifier
-                                            .animateItemPlacement()
-                                            .fillParentMaxHeight()
-                                    ) {
-                                        ItemWebView(char)
-                                        Spacer(modifier = Modifier.height(8.dp))
+                    if (noResultsMessage.value) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth(0.8f)
+                        ) {
+                            Image(
+                                painterResource(id = R.drawable.error_crying),
+                                null,
+                                modifier = Modifier.clip(
+                                    RoundedCornerShape(12.dp)
+                                )
+                            )
+                        }
+                        if (internetStatus == ConnectivityObserver.Status.Available
+                            && charList.value.isEmpty() && searchText.isEmpty()
+                        ) {
+                            coroutineScope.launch {
+                                viewModel.searchInList("")
+                                println("retry search")
+                            }
+                        }
+                    } else {
+                        val listState = rememberLazyListState()
+                        LazyColumn(
+                            state = listState,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(8.dp)
+                        ) {
+                            items(charList.value.distinct(), key = null) { char ->
+                                Column(Modifier.animateItemPlacement()) {
+                                    Row(Modifier.animateItemPlacement()) {
+                                        CharCard(
+                                            char,
+                                            listState,
+                                            charList.value.indexOf(char),
+                                            keyboardController
+                                        )
+                                    }
+                                    if (char.webViewState.value) {
+                                        Row(
+                                            Modifier
+                                                .animateItemPlacement()
+                                                .fillParentMaxHeight()
+                                        ) {
+                                            ItemWebView(char)
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                        }
                                     }
                                 }
                             }
