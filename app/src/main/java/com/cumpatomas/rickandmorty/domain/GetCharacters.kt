@@ -3,9 +3,9 @@ package com.cumpatomas.rickandmorty.domain
 import com.cumpatomas.rickandmorty.data.network.CharService
 import com.cumpatomas.rickandmorty.data.network.ResponseEvent
 import com.cumpatomas.rickandmorty.domain.model.CharModel
+import javax.inject.Inject
 
-class GetCharacters {
-    private val provider = CharService()
+class GetCharacters@Inject constructor(private val provider: CharService) {
 
     suspend operator fun invoke(
         query: String

@@ -3,15 +3,14 @@ package com.cumpatomas.rickandmorty.data.network
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
-import com.cumpatomas.rickandmorty.manualdi.ApplicationModule
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
-class NetworkConnectivityObserver() : ConnectivityObserver {
-    private val context = ApplicationModule.applicationContext
+class NetworkConnectivityObserver( context: Context) : ConnectivityObserver {
+
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 

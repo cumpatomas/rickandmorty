@@ -7,6 +7,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -63,17 +64,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.cumpatomas.rickandmorty.data.network.ConnectivityObserver
 import com.cumpatomas.rickandmorty.data.network.NetworkConnectivityObserver
 import com.cumpatomas.rickandmorty.domain.model.CharModel
-import com.cumpatomas.rickandmorty.manualdi.ApplicationModule
 import com.cumpatomas.rickandmorty.ui.theme.RickAndMortyTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private lateinit var connectivityObserver: ConnectivityObserver
+    private val viewModel : MainActivityViewModel by viewModels()
+
 
     @OptIn(ExperimentalComposeUiApi::class)
     @SuppressLint("StateFlowValueCalledInComposition")
@@ -81,13 +84,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            ApplicationModule.initialiseApplicationContext(this.application)
-            val viewModel = viewModel<MainActivityViewModel>()
+/*            ApplicationModule.initialiseApplicationContext(this.application)*/
+
             val charList = viewModel.charList.collectAsState()
             val loading = viewModel.loading.collectAsState()
             val noResultsMessage = viewModel.noResultsMessage.collectAsState()
             val keyboardController = LocalSoftwareKeyboardController.current
-            connectivityObserver = NetworkConnectivityObserver()
+            connectivityObserver = NetworkConnectivityObserver(applicationContext)
             val internetStatus by connectivityObserver.observe().collectAsState(
                 initial = ConnectivityObserver.Status.Unavailable
             )

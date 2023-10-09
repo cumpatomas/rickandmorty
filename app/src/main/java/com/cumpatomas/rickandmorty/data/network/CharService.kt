@@ -1,10 +1,9 @@
 package com.cumpatomas.rickandmorty.data.network
 
 import com.cumpatomas.rickandmorty.domain.model.JsonModel
-import com.cumpatomas.rickandmorty.manualdi.NetworkModule
+import javax.inject.Inject
 
-class CharService {
-    private val retrofit = NetworkModule.retrofit.create(CharactersApi::class.java)
+class CharService@Inject constructor(private val retrofit: CharactersApi) {
 
     suspend fun getAllChars(
         query: String,

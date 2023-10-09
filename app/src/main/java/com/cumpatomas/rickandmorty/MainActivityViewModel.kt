@@ -4,18 +4,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cumpatomas.rickandmorty.domain.GetCharacters
 import com.cumpatomas.rickandmorty.domain.model.CharModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MainActivityViewModel : ViewModel() {
-    private val getCharList = GetCharacters()
+@HiltViewModel
+class MainActivityViewModel @Inject constructor(
+    private val getCharList: GetCharacters
+) : ViewModel() {
     private val _charList = MutableStateFlow(emptySet<CharModel>())
     val charList = _charList.asStateFlow()
     private val _loading = MutableStateFlow(false)
@@ -69,6 +71,4 @@ class MainActivityViewModel : ViewModel() {
             }
         }
     }
-
-
 }
